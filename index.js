@@ -1,11 +1,16 @@
 var AWS = require("aws-sdk")
 var s3 = new AWS.S3()
+var mime = require('mime-types')
 
 const pThrottle = require('p-throttle');
 const throttledSync = pThrottle(syncObjects, 1000, 1000);
 
 function syncObjects(from, to, params) {
-  return s3.upload(Object.assign(params || {}, {
+  var params = {} || params
+  if (mime.lookup(to.key)) {
+    params.ContentType = mime.lookup(to.key)
+  }
+  return s3.upload(Object.assign(params, {
     Bucket: to.bucket,
     Key: to.key,
     Body: s3.getObject({ Bucket: from.bucket, Key: from.key }).createReadStream()
